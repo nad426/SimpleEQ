@@ -130,6 +130,11 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
         }
         
     }
+    void updateLowCutFilters(const ChainSettings& chainSettings);
+    void updateHighCutFilters(const ChainSettings& chainSettings);
+    
+    void updateFilters();
+    
     
     
     //==============================================================================
