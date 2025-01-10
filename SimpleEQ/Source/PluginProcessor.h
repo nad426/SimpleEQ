@@ -19,7 +19,7 @@ enum Slope{
 
 
 struct ChainSettings{
-    float peakFreq {0}, peakGainInDecibels{0}, peakQuality{0};
+    float peakFreq {0}, peakGainInDecibels{0}, peakQuality{1.f};
     float lowCutFreq {0}, highCutFreq{0};
     Slope lowCutSlope {Slope::Slope_12}, highCutSlope {Slope::Slope_12};
 };
@@ -86,7 +86,7 @@ inline auto makeLowCutFilter(const ChainSettings& chainSettings, double sampleRa
 }
 
 inline auto makeHighCutFilter(const ChainSettings& chainSettings, double sampleRate){
-    return juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, 2* (chainSettings.highCutSlope)+1);
+    return juce::dsp::FilterDesign<float>::designIIRLowpassHighOrderButterworthMethod(chainSettings.highCutFreq, sampleRate, 2* (chainSettings.highCutSlope)+1);
 }
 //==============================================================================
 /**
@@ -138,8 +138,7 @@ class SimpleEQAudioProcessor  : public juce::AudioProcessor
     
     MonoChain leftChain, rightChain;
     
-    
-    
+
     void updatePeakFilter(const ChainSettings& chainSettings);
     
     
