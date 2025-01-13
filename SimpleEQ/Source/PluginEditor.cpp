@@ -124,13 +124,39 @@ void RotarySliderWithLabels::paint(juce::Graphics &g){
     auto range = getRange();
     
     auto sliderBounds = getSliderBounds();
-    
+    /*rectangle bounds for sliders
     g.setColour(Colours::red);
     g.drawRect(getLocalBounds());
     g.setColour(Colours::yellow);
     g.drawRect(sliderBounds);
+    */
     
     getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(), jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAngle, endAngle, *this);
+    
+    auto center = sliderBounds.toFloat().getCentre();
+    auto radius = sliderBounds.getWidth() * 0.5f;
+    
+    g.setColour(Colours::black);
+    g.setFont(getTextHeight());
+    
+    auto numChoices = labels.size();
+    for (int i =0 ; i<numChoices;++i){
+        auto pos = labels[i].pos;
+        jassert(0.f <= pos);
+        jassert(pos <= 1.f);
+        auto ang = jmap(pos, 0.f, 1.f, startAngle, endAngle);
+        
+        auto c = center.getPointOnCircumference(radius+getTextHeight()+0.5f+1, ang);
+        
+        Rectangle<float> r;
+        auto str = labels[i].label;
+        
+        r.setSize(g.getCurrentFont().getStringWidth(str),getTextHeight());
+        r.setCentre(c);
+        r.setY(r.getY() + getTextHeight());
+        
+        g.drawFittedText(str, r.toNearestInt(), juce::Justification::centred,1);
+    }
 }
 
 /*==============================================================================*/
@@ -142,6 +168,8 @@ ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audi
     for (auto param : params){
         param->addListener(this);
     }
+    
+    updateChain();
     
     startTimerHz(60);
 }
@@ -161,26 +189,29 @@ void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float new
 //
 //}
 void ResponseCurveComponent::timerCallback(){
+    
+    
     if ( parametersChanged.compareAndSetBool(false, true)){
         
-        
-        //update monoChain
-        auto chainSettings = getChainSettings(audioProcessor.apvts);
-        auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
-        updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
-        
-        auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
-        auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-
-        updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
-        updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
-
+        DBG( "params Changed "); // console log
+        updateChain();
         //Signal repaint
-        
         repaint();
-        
-        
     }
+}
+
+void ResponseCurveComponent::updateChain(){
+    //update monoChain
+    auto chainSettings = getChainSettings(audioProcessor.apvts);
+    auto peakCoefficients = makePeakFilter(chainSettings, audioProcessor.getSampleRate());
+    updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+    
+    auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+    auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+
+    updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
+    updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
+
 }
 
 void ResponseCurveComponent::paint (juce::Graphics& g)
@@ -278,6 +309,29 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     
+    peakFreqSlider.labels.add({0.f,"20Hz"});
+    peakFreqSlider.labels.add({1.f,"20kHz"});
+    
+    peakGainSlider.labels.add({0.f,"-24dB"});
+    peakGainSlider.labels.add({1.f,"+24dB"});
+    
+    peakQualitySlider.labels.add({0.f,"0.1"});
+    peakQualitySlider.labels.add({1.f,"10.0"});
+    
+    lowCutFreqSlider.labels.add({0.f,"20Hz"});
+    lowCutFreqSlider.labels.add({1.f,"20kHz"});
+    
+    highCutFreqSlider.labels.add({0.f,"20Hz"});
+    highCutFreqSlider.labels.add({1.f,"20kHz"});
+    
+    lowCutSlopeSlider.labels.add({0.0f,"12 dB/Oct"});
+    lowCutSlopeSlider.labels.add({1.0f,"48 dB/Oct"});
+    
+    highCutSlopeSlider.labels.add({0.0f,"12 dB/Oct"});
+    highCutSlopeSlider.labels.add({1.0f,"48 dB/Oct"});
+
+    
+    
     for( auto* comp: getComps()){
         addAndMakeVisible(comp);
     }
@@ -309,9 +363,12 @@ void SimpleEQAudioProcessorEditor::resized()
     // subcomponents in your editor..
     
     auto bounds = getLocalBounds ();
+    float hRatio = 25.f / 100.f; //JUCE_LIVE_CONSTANT(33)/100.f;
     auto responseArea = bounds.removeFromTop(bounds.getHeight() * 0.33);
     
     responseCurveComponent.setBounds(responseArea);
+    
+    bounds.removeFromTop(8);
     
     auto lowCutArea = bounds.removeFromLeft(bounds.getWidth() * 0.33);
     auto highCutArea = bounds.removeFromRight (bounds.getWidth () * 0.5);
