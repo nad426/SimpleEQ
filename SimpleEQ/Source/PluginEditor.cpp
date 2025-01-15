@@ -55,7 +55,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics & g, int x, int y, int width, 
         r.setCentre(center);
         g.setColour(Colours::black);
         g.fillRect(r);
-
+        
         g.setColour(Colours::white);
         g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
         
@@ -82,7 +82,7 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const{
 /*==============================================================================*/
 
 juce::String RotarySliderWithLabels::getDisplayString() const{
-//    return juce::String(getValue());
+    //    return juce::String(getValue());
     
     if( auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param)){
         return choiceParam->getCurrentChoiceName();
@@ -110,7 +110,7 @@ juce::String RotarySliderWithLabels::getDisplayString() const{
         str << suffix;
     }
     return str;
-
+    
 }
 
 /*==============================================================================*/
@@ -125,11 +125,11 @@ void RotarySliderWithLabels::paint(juce::Graphics &g){
     
     auto sliderBounds = getSliderBounds();
     /*rectangle bounds for sliders
-    g.setColour(Colours::red);
-    g.drawRect(getLocalBounds());
-    g.setColour(Colours::yellow);
-    g.drawRect(sliderBounds);
-    */
+     g.setColour(Colours::red);
+     g.drawRect(getLocalBounds());
+     g.setColour(Colours::yellow);
+     g.drawRect(sliderBounds);
+     */
     
     getLookAndFeel().drawRotarySlider(g, sliderBounds.getX(), sliderBounds.getY(), sliderBounds.getWidth(), sliderBounds.getHeight(), jmap(getValue(), range.getStart(), range.getEnd(), 0.0, 1.0), startAngle, endAngle, *this);
     
@@ -208,10 +208,10 @@ void ResponseCurveComponent::updateChain(){
     
     auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
     auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
-
+    
     updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients, chainSettings.lowCutSlope);
     updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients, chainSettings.highCutSlope);
-
+    
 }
 
 void ResponseCurveComponent::paint (juce::Graphics& g)
@@ -224,7 +224,7 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     
     g.drawImage(background, getLocalBounds().toFloat());
     auto responseArea = getAnalysisArea();
-   
+    
     auto w = responseArea.getWidth();
     
     auto& lowcut = monoChain.get<ChainPositions::LowCut>();
@@ -233,7 +233,7 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     
     auto sampleRate = audioProcessor.getSampleRate();
     
-
+    
     vector<double> mags;
     
     mags.resize(w);
@@ -265,7 +265,7 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
             mag *= highcut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
         mags[i] = Decibels::gainToDecibels(mag);
     }
-
+    
     Path responseCurve;
     
     const double outputMin = responseArea.getBottom();
@@ -311,7 +311,7 @@ void ResponseCurveComponent::resized(){
     
     g.setColour(Colours::dimgrey);
     for(auto x: xs){
-//        auto normX = mapFromLog10(f, 20.f, 20000.f);
+        //        auto normX = mapFromLog10(f, 20.f, 20000.f);
         
         g.drawVerticalLine(x, top, bottom);
     }
@@ -320,12 +320,12 @@ void ResponseCurveComponent::resized(){
     
     for(auto gDb:gain){
         auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
-//        g.drawHorizontalLine(y,0, getWidth());
+        //        g.drawHorizontalLine(y,0, getWidth());
         g.setColour(gDb == 0.f ? Colour(0u,172u,1u) : Colours::darkgrey);
         g.drawHorizontalLine(y, left, right);
     }
     
-//    g.drawRect(getAnalysisArea());
+    //    g.drawRect(getAnalysisArea());
     g.setColour(Colours::lightgrey);
     const int fontHeight = 12;
     g.setFont(fontHeight);
@@ -354,12 +354,34 @@ void ResponseCurveComponent::resized(){
         r.setY(1);
         
         g.drawFittedText(str, r, juce::Justification::centred, 1);
+        
+    }
+    for(auto gDb : gain){
+        auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
+        
+        String str;
+        if (gDb > 0){
+            str << "+";
+        }
+        str << gDb;
+        
+        Rectangle<int> r;
+        auto textWidth = g.getCurrentFont().getStringWidth(str);
+
+        r.setSize(textWidth,fontHeight);
+        r.setX(getWidth() - textWidth);
+        r.setCentre(r.getCentreX(), y);
+        
+        g.setColour(gDb == 0.f ? Colour(0u,172u,1u) : Colours::lightgrey);
+        g.drawFittedText(str, r, juce::Justification::centred, 1);
+        
+        
     }
 }
 
 juce::Rectangle<int> ResponseCurveComponent::getRenderArea(){
     auto bounds = getLocalBounds();
-//    bounds.reduce(10 /*JUCE_LIVE_CONSTANT(5)*/, 8/*JUCE_LIVE_CONSTANT(5)*/);
+    //    bounds.reduce(10 /*JUCE_LIVE_CONSTANT(5)*/, 8/*JUCE_LIVE_CONSTANT(5)*/);
     bounds.removeFromTop(12);
     bounds.removeFromBottom(2);
     bounds.removeFromLeft(20);
@@ -419,20 +441,20 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
     
     highCutSlopeSlider.labels.add({0.0f,"12 dB/Oct"});
     highCutSlopeSlider.labels.add({1.0f,"48 dB/Oct"});
-
+    
     
     
     for( auto* comp: getComps()){
         addAndMakeVisible(comp);
     }
     
-
+    
     setSize (600, 400);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 {
-
+    
     
 }
 
