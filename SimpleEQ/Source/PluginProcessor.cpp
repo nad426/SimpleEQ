@@ -113,6 +113,12 @@ void SimpleEQAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     leftChannelFifo.prepare(samplesPerBlock);
     rightChannelFifo.prepare(samplesPerBlock);
     
+    osc.initialise([](float x) {return std::sin(x); });
+    
+    spec.numChannels = getTotalNumOutputChannels();
+    osc.prepare(spec);
+    osc.setFrequency(200);
+    
 }
 
 void SimpleEQAudioProcessor::releaseResources()
@@ -164,35 +170,17 @@ void SimpleEQAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     
     
     updateFilters();
-    //    auto chainSettings = getChainSettings(apvts);
-    //
-    //    updatePeakFilter(chainSettings);
-    //
-    //    // <---------->
-    //    auto lowCutCoefficient = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.lowCutFreq, getSampleRate(), 2* (chainSettings.lowCutSlope)+1);
-    //
-    //    auto& leftLowCut = leftChain.get<ChainPositions::LowCut>();
-    //    updateCutFilter(leftLowCut, lowCutCoefficient, chainSettings.lowCutSlope);
-    //
-    //
-    //    auto& rightLowCut = rightChain.get<ChainPositions::LowCut>();
-    //    updateCutFilter(rightLowCut, lowCutCoefficient, chainSettings.lowCutSlope);
-    //
-    //    // <---------->
-    //
-    //    auto highCutCoefficient = juce::dsp::FilterDesign<float>::designIIRHighpassHighOrderButterworthMethod(chainSettings.highCutFreq, getSampleRate(), 2* (chainSettings.highCutSlope)+1);
-    //
-    //    auto& leftHighCut = leftChain.get<ChainPositions::HighCut>();
-    //
-    //    auto& rightHighCut = rightChain.get<ChainPositions::HighCut>();
-    //
-    //    updateCutFilter(leftHighCut, highCutCoefficient, chainSettings.highCutSlope);
-    //    updateCutFilter(rightHighCut, highCutCoefficient, chainSettings.highCutSlope);
     
-    // <---------->
+    
+
     
     juce::dsp::AudioBlock<float> block(buffer);
-    
+//    
+//    buffer.clear();
+//    
+//    juce::dsp::ProcessContextReplacing<float> stereoContext(block);
+//    osc.process(stereoContext);
+
     auto leftBlock = block.getSingleChannelBlock(0);
     auto rightBlock = block.getSingleChannelBlock(1);
     
